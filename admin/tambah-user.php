@@ -1,18 +1,71 @@
-<?php 
-session_start();
+<?php
 include 'koneksi.php';
-// munculkan / pilih sebuah atau semua kolom dari table user
-$queryUser = mysqli_query($koneksi, "SELECT * FROM user");
-// mysqli_fetch_assoc($query) = unhtuk menjadikan hasil query menjadi sebuah data (object, array)
+session_start();
+
+if (isset($_POST['simpan'])) {
+    $nama   = $_POST['nama'];
+    $email   = $_POST['email'];
+    $password = $_POST['password'];
+
+    // $_POST: form input name=''
+    // $_GET: url ?param='nilai'
+    // $_FILES: ngambil nilai dari input type file
+    if(!empty($_FILES['foto']['name'])){
+        $nama_foto = $_FILES['foto']['name'];
+        $ukuran_foto = $_FILES['foto']['size'];
+
+        // png, jpg, jpeg
+        $ext = array('png', 'jpg', 'jpeg');
+        $extFoto = pathinfo($nama_foto,PATHINFO_EXTENSION);
+
+        // JIKA EXTESI FOTO TIDAK ADA YANG TERDAFTAR DI ARRAY EXTENSI
+        if(!in_array($extFoto, $ext)){
+            echo "Ext foto tidak ditemukan";
+            die;
+        }else{
+            // Pindahkan gambar dari tmp folder ke folder yang telah kita buat
+            move_uploaded_file($_FILES['foto']['tmp_name'], 'upload/' .$nama_foto);
+            
+            $insert = mysqli_query($koneksi, "INSERT INTO user (nama, email, password , foto) VALUES
+            ('$nama', '$email', '$password', '$nama_foto')");
+        }
+    } else {
+        $insert = mysqli_query($koneksi, "INSERT INTO user (nama, email, password ) VALUES
+            ('$nama', '$email', '$password')");
+    }
+
+    header("location:user.php?tambah=berhasil");
+}
+
+$id = isset($_GET['edit']) ? $_GET['edit'] : '';
+$editUser = mysqli_query(
+    $koneksi,"SELECT * FROM user WHERE id = '$id'"
+);
+$rowEdit = mysqli_fetch_assoc($editUser);
+
+if (isset($_POST['edit'])){
+    $nama   = $_POST['nama'];
+    $email   = $_POST['email'];
+    
+    // jika password diisi sama user
+    if ($_POST['password']) {
+        $password = sha1($_POST['password']);
+    } else {
+        $password = $rowEdit['password'];
+    }
+    
+    // ubah user kolom apa yang mau di ubah (SET), yang mau di ubah id ke berapa
+    $update = mysqli_query($koneksi, "UPDATE user SET nama='$nama',email='$email' ,password='$password' WHERE id='$id'");
+    header("location:user.php?ubah=berhasil");
+}
 
 // jika parameternya ada ?delete=nilai parameter
-if(isset($_GET['delete'])){
+if (isset($_GET['delete'])) {
     $id = $_GET['delete']; // mengambil nilai parameter
 
     // query / perintah hapus
     $delete = mysqli_query($koneksi, "DELETE FROM user WHERE id ='$id'");
     header("location:user.php?hapus=berhasil");
-    
 }
 ?>
 
@@ -77,44 +130,39 @@ if(isset($_GET['delete'])){
                         <div class="row">
                             <div class="col-sm-12">
                                 <div class="card">
-                                    <div class="card-header fw-bold" style="font-size: x-large;">Data User</div>
                                     <div class="card-body">
-                                        <?php if(isset($_GET['hapus'])): ?>
-                                            <div class="alert alert-primary" role="alert">Data berhasil dihapus</div>
-                                        <?php endif ?>
-                                            <div class="mb-3" align="right">
-                                                <a href="tambah-user.php" class="btn btn-primary">Tambah</a>
-                                            </div>
-                                            <table class="table table-bordered">
-                                                <thead>
-                                                    <tr>
-                                                        <th>No</th>
-                                                        <th>Nama</th>
-                                                        <th>Email</th>
-                                                        <th>Aksi</th>
-                                                    </tr>
-                                                </thead>
-                                        <tbody>
-                                            <?php $no = 1; while ($rowUser = mysqli_fetch_assoc($queryUser)): ?>
-                                            <tr>
-                                                <td><?php echo $no++ ?></td>
-                                                <td><?php echo $rowUser['nama'] ?></td>
-                                                <td><?php echo $rowUser['email'] ?></td>
-                                                <td>
-                                                    <a class="btn btn-success btn-sm"
-                                                    href="tambah-user.php?edit=<?php echo $rowUser['id'] ?>"><span class="tf-icon bx bx-pencil"></a>
-                                                    
-                                                    <a class="btn btn-danger btn-sm"
-                                                    onclick="return confirm('Apakah Anda Yakin untuk Menghapus Data Ini?')"
-                                                    href="user.php?delete=<?php echo $rowUser['id'] ?>"><span class="tf-icon bx bx-trash"></a>
-                                                </td>
-                                            </tr>
-                                            <?php endwhile ?>
-                                        </tbody>
-                                    </table>
+                                        <legend class="float-none w-auto px-3 fw-bold">
+                                            <?php echo isset($_GET['edit']) ? 'Edit' : 'Tambah' ?> User</legend>
+                                            <form action="" method="post" enctype="multipart/form-data">
+                                                <div class="mb-3 row">
+                                                    <div class="col-sm-6">
+                                                        <label for="" class="form-label">Nama</label>
+                                                        <input type="text" class="form-control" name="nama" placeholder="Masukkan Nama Anda" required value="<?php echo isset($_GET['edit']) ? $rowEdit['nama'] : '' ?>">
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <label for="" class="form-label">Email</label>
+                                                        <input type="email" class="form-control" name="email" placeholder="Masukkan Email Anda" required value="<?php echo isset($_GET['edit']) ? $rowEdit['email'] : '' ?>">
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3 row">
+                                                    <div class="col-sm-12">
+                                                        <label for="" class="form-label">Password</label>
+                                                        <input type="password" class="form-control" name="password" placeholder="Masukkan Password" id="">
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3 row">
+                                                    <div class="col-sm-12">
+                                                        <label for="" class="form-label">Foto</label>
+                                                        <input type="file" name="foto" >
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <button class="btn btn-primary" name="<?php echo isset($_GET['edit']) ? 'edit' : 'simpan' ?>" type="submit">Simpan</button>
+                                                </div>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
                         </div>
                     </div>
                     <!-- / Content -->
@@ -126,7 +174,7 @@ if(isset($_GET['delete'])){
                             <div class="mb-2 mb-md-0">
                                 ©
                                 <script>
-                                document.write(new Date().getFullYear());
+                                    document.write(new Date().getFullYear());
                                 </script>
                                 , made with ❤️ by
                                 <a href="https://themeselection.com" target="_blank"
