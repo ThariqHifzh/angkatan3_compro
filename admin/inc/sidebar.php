@@ -110,14 +110,14 @@
         </li>
 
         <li class="menu-item">
-            <a href="index.php" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-detail"></i>
-                <div data-i18n=" Basic">Page</div>
+            <a href="contact-admin.php" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-box"></i>
+                <div data-i18n=" Basic">Contact</div>
             </a>
         </li>
         <li class="menu-item">
             <a href="instruktur.php" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-user"></i>
+                <i class="menu-icon tf-icons bx bx-crown"></i>
                 <div data-i18n=" Basic">Data Instruktur</div>
             </a>
         </li>
